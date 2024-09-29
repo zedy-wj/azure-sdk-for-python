@@ -1,0 +1,89 @@
+name: Run azure-appconfiguration samples
+trigger: none
+
+pool:
+  vmImage: ubuntu-latest
+
+parameters:
+  - name: location
+    displayName: The location of all test resources
+    type: string
+  - name: autoCleanup
+    displayName: Auto cleanup
+    type: boolean
+    default: true
+
+variables:
+  - name: SamplePath
+    value: azure-sdk-for-python/sdk/appconfiguration/azure-appconfiguration/samples
+#   - name: RelativePath
+#     value: sdk/appconfiguration/azure-appconfiguration/samples/
+
+jobs:
+- job: RunSamples
+  steps:
+  - task: AzureCLI@2
+    name: CreateAppConfig
+    displayName: Create App Configuration
+    inputs:
+      azureSubscription: test-connection
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        rgName="rg-appconfig-sample-test-$(uuidgen | cut -c 1-8)"
+        echo "Generated resource group name: $rgName"
+        echo "Creating resource group..."
+        az group create -g $rgName  -l ${{ parameters.location }}
+
+        appName="appconfig-$(uuidgen | cut -c 1-8)"
+        echo "Generated appconfig name: $appName"
+        echo "Creating appconfig resource..."
+        az appconfig create -g $rgName -n $appName -l ${{ parameters.location }}
+        connString=$(az appconfig credential list --name $appName --resource-group $rgName --query "[?name=='Primary'].connectionString" -o tsv)
+        echo "##vso[task.setvariable variable=APPCONFIGURATION_CONNECTION_STRING;isOutput=true]$connString"
+        echo "##vso[task.setvariable variable=APPCONFIGURATION_NAME;isOutput=true]$appName"
+        echo "##vso[task.setvariable variable=RESOURCE_GROUP_NAME;isOutput=true]$rgName"
+
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: 3.x
+      addToPath: true
+
+  - task: Bash@3
+    displayName: Setup py env
+    inputs:
+      targetType: inline
+      script: |
+        python -m venv env
+        source env/bin/activate
+        pip install aiohttp>=3.0
+        pip install --pre azure-appconfiguration
+
+  - task: Bash@3
+    displayName: Run samples
+    env:
+      APPCONFIGURATION_CONNECTION_STRING: $(CreateAppConfig.APPCONFIGURATION_CONNECTION_STRING)
+    inputs:
+      targetType: filePath
+      filePath: azure-sdk-for-python/scripts/run-samples.sh
+      arguments: $(SamplePath)
+
+  - task: AzureCLI@2
+    condition: eq('${{ parameters.AutoCleanup }}', true)
+    displayName: Clean up App Configuration resource
+    inputs:
+      azureSubscription: test-connection
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        echo "Deleting $(CreateAppConfig.APPCONFIGURATION_NAME)..."
+        az appconfig delete -g ${{ CreateAppConfig.RESOURCE_GROUP_NAME }} -n $(CreateAppConfig.APPCONFIGURATION_NAME) -y
+        echo "Purge appconfig..."
+        az appconfig purge -n ${{ CreateAppConfig.APPCONFIGURATION_NAME }} -y
+
+        echo "Delete group..."
+        az group delete -g ${{ CreateAppConfig.RESOURCE_GROUP_NAME }} -y
+
+  # todo: Purge App Configuration resource
+  #   Pipeline always raise "failed to find deleted App Configuration" using Azure CLI, 
+  #   but on local device it always work. Need to investigate.

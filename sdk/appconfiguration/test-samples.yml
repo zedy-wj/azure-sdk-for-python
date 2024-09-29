@@ -13,8 +13,6 @@ parameters:
 variables:
   - name: SamplePath
     value: sdk/appconfiguration/azure-appconfiguration/samples
-#   - name: RelativePath
-#     value: sdk/appconfiguration/azure-appconfiguration/samples/
 
 jobs:
 - job: RunSamples
@@ -74,12 +72,8 @@ jobs:
       inlineScript: |
         echo "Deleting $(CreateAppConfig.APPCONFIGURATION_NAME)..."
         az appconfig delete -g $(CreateAppConfig.RESOURCE_GROUP_NAME) -n $(CreateAppConfig.APPCONFIGURATION_NAME) -y
-        echo "Purge appconfig..."
+        echo "Purge $(CreateAppConfig.APPCONFIGURATION_NAME)..."
         az appconfig purge -n $(CreateAppConfig.APPCONFIGURATION_NAME) -y
 
-        echo "Delete group..."
+        echo "Deleting $(CreateAppConfig.RESOURCE_GROUP_NAME)..."
         az group delete -g $(CreateAppConfig.RESOURCE_GROUP_NAME) -y
-
-  # todo: Purge App Configuration resource
-  #   Pipeline always raise "failed to find deleted App Configuration" using Azure CLI, 
-  #   but on local device it always work. Need to investigate.

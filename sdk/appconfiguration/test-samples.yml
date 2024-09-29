@@ -12,7 +12,7 @@ parameters:
 
 variables:
   - name: SamplePath
-    value: azure-sdk-for-python/sdk/appconfiguration/azure-appconfiguration/samples
+    value: sdk/appconfiguration/azure-appconfiguration/samples
 #   - name: RelativePath
 #     value: sdk/appconfiguration/azure-appconfiguration/samples/
 
@@ -62,7 +62,7 @@ jobs:
       APPCONFIGURATION_CONNECTION_STRING: $(CreateAppConfig.APPCONFIGURATION_CONNECTION_STRING)
     inputs:
       targetType: filePath
-      filePath: azure-sdk-for-python/scripts/run-samples.sh
+      filePath: scripts/run-samples.sh
       arguments: $(SamplePath)
 
   - task: AzureCLI@2

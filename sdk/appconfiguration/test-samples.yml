@@ -73,12 +73,12 @@ jobs:
       scriptLocation: inlineScript
       inlineScript: |
         echo "Deleting $(CreateAppConfig.APPCONFIGURATION_NAME)..."
-        az appconfig delete -g ${{ CreateAppConfig.RESOURCE_GROUP_NAME }} -n $(CreateAppConfig.APPCONFIGURATION_NAME) -y
+        az appconfig delete -g $(CreateAppConfig.RESOURCE_GROUP_NAME) -n $(CreateAppConfig.APPCONFIGURATION_NAME) -y
         echo "Purge appconfig..."
-        az appconfig purge -n ${{ CreateAppConfig.APPCONFIGURATION_NAME }} -y
+        az appconfig purge -n $(CreateAppConfig.APPCONFIGURATION_NAME) -y
 
         echo "Delete group..."
-        az group delete -g ${{ CreateAppConfig.RESOURCE_GROUP_NAME }} -y
+        az group delete -g $(CreateAppConfig.RESOURCE_GROUP_NAME) -y
 
   # todo: Purge App Configuration resource
   #   Pipeline always raise "failed to find deleted App Configuration" using Azure CLI, 

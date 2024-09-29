@@ -8,10 +8,7 @@ parameters:
   - name: location
     displayName: The location of all test resources
     type: string
-  - name: autoCleanup
-    displayName: Auto cleanup
-    type: boolean
-    default: true
+    default: 'eastus'
 
 variables:
   - name: SamplePath
@@ -26,7 +23,7 @@ jobs:
     name: CreateAppConfig
     displayName: Create App Configuration
     inputs:
-      azureSubscription: test-connection
+      azureSubscription: test-connection-dev
       scriptType: bash
       scriptLocation: inlineScript
       inlineScript: |
@@ -69,10 +66,9 @@ jobs:
       arguments: $(SamplePath)
 
   - task: AzureCLI@2
-    condition: eq('${{ parameters.AutoCleanup }}', true)
     displayName: Clean up App Configuration resource
     inputs:
-      azureSubscription: test-connection
+      azureSubscription: test-connection-dev
       scriptType: bash
       scriptLocation: inlineScript
       inlineScript: |
